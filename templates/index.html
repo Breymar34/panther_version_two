@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AcadGWAlytics : Academic Data Mining Analytics for GWA Prediction</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+  <style>
+    /* Spinner overlay */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255,255,255,0.8);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    /* Modal polish */
+    .result-header {
+      background: linear-gradient(135deg, #0d6efd, #4dabf7);
+      color: #fff;
+    }
+    .metric-box {
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+    }
+    .custom-brand {
+     font-family: 'Poppins', sans-serif;
+     color: #fd690d;
+     font-weight: 700;
+      text-shadow:
+        1px 1px 0 #ffffff,
+        2px 2px 2px rgba(0,0,0,0.3),
+        3px 3px 3px rgba(0,0,0,0.3),
+        4px 4px 4px rgba(0,0,0,0.3),
+        5px 5px 5px rgba(0,0,0,0.2);
+      color: inherit !important;
+      text-decoration: none !important;
+      cursor: default;
+    }
+          /* --- Result Modal Animations (minimal) --- */
+      .progress .progress-bar { transition: width .9s ease; }
+
+      .progress-bar.bg-success { background: linear-gradient(to right, #00c851, #007e33); }
+      .progress-bar.bg-danger { background: linear-gradient(to right, #ff4444, #cc0000); }
+
+
+      .gwa-pop { opacity: 0; transform: scale(.92) translateY(6px); transition: all .5s ease; }
+      .gwa-pop.show { opacity: 1; transform: scale(1) translateY(0); }
+
+      .suggestion-fade { opacity: 0; transform: translateY(10px); transition: all .6s ease .15s; }
+      .suggestion-fade.show { opacity: 1; transform: none; }
+
+      .badge-pulse { animation: badgePulse 1.2s ease-in-out 2; transform-origin: center; }
+      @keyframes badgePulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+
+      /* Smaller but responsive buttons */
+      .btn-custom {
+        padding: 6px 14px;      /* Decrease padding for smaller height */
+        font-size: 0.9rem;      /* Slightly smaller text */
+        border-radius: 6px;     /* Rounded corners */
+        min-width: 80px;        /* Keeps buttons from becoming too small */
+      }
+
+      /* Ensure responsiveness */
+      @media (max-width: 576px) {
+        .btn-custom {
+          width: 100%;          /* Full width on small screens */
+          margin-bottom: 8px;   /* Add space between stacked buttons */
+        }
+      }
+
+  </style>
+</head>
+<body class="bg-light">
+  <!-- Top bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+  <div class="container-fluid">
+    <!-- Brand with Logo -->
+    <a class="navbar-brand d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">
+      <img src="{{ url_for('static', filename='images/logo_gwa.png') }}" alt="GWA Predictor" height="90" class="d-inline-block align-text-top me-2">
+    </a>
+  </div>
+</nav>
+<hr class="mt-5">
+<!-- About / Credits Modal -->
+<div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      <div class="modal-header bg-info text-white rounded-top-4">
+        <h5 class="modal-title" id="aboutModalLabel">About This App</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p><strong>PAnTHER - Predictive Analytics Tool for Higher Education Readiness </strong></p>
+        <p>PAnTHER utilizes advanced analytics and machine learning to generate personalized success forecasts based on academic variables including subject-specific grades, entrance exam scores, and other pre-admission requirements.</p>
+        <hr>
+        <p class="mb-1"><strong>Credits:</strong></p>
+        <ul class="mb-0">
+          <li>Author / Researcher: <em>Ma.Concepcion R. Repalam</em></li>
+          <li>Framework: Bootstrap 5</li>
+          <li>Backend: Flask (Python)</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Disclaimer / Credits Modal -->
+<div class="modal fade" id="disclaimerModal" tabindex="-1" aria-labelledby="disclaimerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      <div class="modal-header bg-info text-white rounded-top-4">
+        <h5 class="modal-title" id="disclaimerModalLabel">PAnTHER - Predictive Analytics Tool for Higher Education Readiness </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p><strong>Disclaimer</strong></p>
+        <p><i class="fa fa-align-justify" aria-hidden="true">The predictions generated by this application are based on available data and analytical models. They are intended solely for informational purposes and should not be interpreted as definitive assessments or judgments of a student's potential or abilities. The application does not claim to determine or assume the actual academic performance or potential of any student.</i></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+  <div class="container py-5 mt-5 pt-4">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-body p-4">
+
+            {% if error %}
+              <div class="alert alert-danger mt-2 mb-0">
+                {{ error }}
+              </div>
+            {% endif %}
+
+            <h2 class="h4 text-primary mb-3">Student Information</h2>
+
+            <form id="gwaForm" method="POST" action="/" class="row g-3 needs-validation" novalidate>
+              <!-- Gender -->
+              <div class="col-md-6">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-select" name="gender" id="gender" required>
+                  <option value="">--Select Gender--</option>
+                  <option value="Male" {% if request.form.get('gender') == 'Male' %}selected{% endif %}>Male</option>
+                  <option value="Female" {% if request.form.get('gender') == 'Female' %}selected{% endif %}>Female</option>
+                </select>
+                <div class="invalid-feedback">Please select a gender.</div>
+              </div>
+
+              <!-- School Attended -->
+              <div class="col-md-6">
+                <label for="school_attended" class="form-label">School Attended</label>
+                <select class="form-select" name="school_attended" id="school_attended" required>
+                  <option value="">--Select School Type--</option>
+                  <option value="Private" {% if request.form.get('school_attended') == 'Private' %}selected{% endif %}>Private</option>
+                  <option value="Public" {% if request.form.get('school_attended') == 'Public' %}selected{% endif %}>Public</option>
+                </select>
+                <div class="invalid-feedback">Please select a school type.</div>
+              </div>
+
+              <!-- Academic Strand -->
+              <div class="col-md-6">
+                <label for="track" class="form-label">Senior High School – Academic Strand</label>
+                <select class="form-select" name="track" id="track" required>
+                  <option value="" disabled {% if not request.form.get('track') %}selected{% endif %}>--Select Track--</option>
+                  <option value="STEM" {% if request.form.get('track') == 'STEM' %}selected{% endif %}>STEM</option>
+                  <option value="ABM" {% if request.form.get('track') == 'ABM' %}selected{% endif %}>ABM</option>
+                  <option value="HUMSS" {% if request.form.get('track') == 'HUMSS' %}selected{% endif %}>HUMSS</option>
+                  <option value="GAS" {% if request.form.get('track') == 'GAS' %}selected{% endif %}>GAS</option>
+                  <option value="TVL" {% if request.form.get('track') == 'TVL' %}selected{% endif %}>TVL
+                </select>
+                <div class="invalid-feedback">Please select a track.</div>
+              </div>
+
+              <!-- Course -->
+              <div class="col-md-6">
+                <label for="course" class="form-label">Preferred Course</label>
+                <select class="form-select" name="course" id="course" required>
+                  <option value="" disabled {% if not request.form.get('course') %}selected{% endif %}>--Select Course--</option>
+                  <option value="BSIT" {% if request.form.get('course') == 'BSIT' %}selected{% endif %}>Bachelor of Science in Information Technology (BSIT)</option>
+                  <option value="BSCS" {% if request.form.get('course') == 'BSCS' %}selected{% endif %}>Bachelor of Science in Computer Science (BSCS)</option>
+                  <option value="BSIS" {% if request.form.get('course') == 'BSIS' %}selected{% endif %}>Bachelor of Science in Information Systems (BSIS)</option>
+                  <option value="BSECE" {% if request.form.get('course') == 'BSECE' %}selected{% endif %}>Bachelor of Science in Electronics and Communications Engineering (BSECE)</option>
+                  <option value="BSEE" {% if request.form.get('course') == 'BSEE' %}selected{% endif %}>Bachelor of Science in Electrical Engineering (BSEE)</option>
+                  <option value="BSME" {% if request.form.get('course') == 'BSME' %}selected{% endif %}>Bachelor of Science in Mechanical Engineering (BSME)</option>
+                  <option value="BSBA" {% if request.form.get('course') == 'BSBA' %}selected{% endif %}>Bachelor of Science in Business Administration (BSBA)</option>
+                  <option value="BSA" {% if request.form.get('course') == 'BSA' %}selected{% endif %}>Bachelor of Science in Accountancy (BSA)</option>
+                  <option value="BSED" {% if request.form.get('course') == 'BSED' %}selected{% endif %}>Bachelor of Secondary Education (BSED)</option>
+                  <option value="BEED" {% if request.form.get('course') == 'BEED' %}selected{% endif %}>Bachelor of Elementary Education (BEED)</option>
+                </select>
+
+                <div class="invalid-feedback">Please select a course.</div>
+              </div>
+
+              <hr class="mt-4">
+              <h2 class="h4 text-primary mt-2">Academic Records</h2>
+
+              <!-- Grades -->
+              <div class="col-md-6">
+                <label for="SHS_ENGLISH" class="form-label">Senior High School – English Grade</label>
+                <input type="number" class="form-control" name="SHS_ENGLISH" id="SHS_ENGLISH"
+                       step="0.01" min="50" max="100" placeholder="e.g., 88.50"
+                       value="{{ form_data.get('SHS_ENGLISH','') }}" required>
+                <div class="invalid-feedback">Please enter a valid grade between 50–100.</div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="SHS_MATH" class="form-label">Senior High School – Mathematics Grade</label>
+                <input type="number" class="form-control" name="SHS_MATH" id="SHS_MATH"
+                       step="0.01" min="50" max="100" placeholder="e.g., 90.00"
+                       value="{{ form_data.get('SHS_MATH','') }}" required>
+                <div class="invalid-feedback">Please enter a valid grade between 50–100.</div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="SHS_SCIENCE" class="form-label">Senior High School – Science Grade</label>
+                <input type="number" class="form-control" name="SHS_SCIENCE" id="SHS_SCIENCE"
+                       step="0.01" min="50" max="100" placeholder="e.g., 91.25"
+                       value="{{ form_data.get('SHS_SCIENCE','') }}" required>
+                <div class="invalid-feedback">Please enter a valid grade between 50–100.</div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="SHS_GRADE" class="form-label">Senior High School – General Average</label>
+                <input type="number" class="form-control" name="SHS_GRADE" id="SHS_GRADE"
+                       step="0.01" min="50" max="100" placeholder="e.g., 89.30"
+                       value="{{ form_data.get('SHS_GRADE','') }}" required>
+                <div class="invalid-feedback">Please enter a valid grade between 50–100.</div>
+              </div>
+
+              <div class="col-md-6">
+                <label for="EXAM" class="form-label">Entrance Exam Score</label>
+                <input type="number" class="form-control" name="EXAM" id="EXAM"
+                       step="0.01" min="0" max="100" placeholder="e.g., 75.00"
+                       value="{{ form_data.get('EXAM','') }}" required>
+                <div class="invalid-feedback">Please enter a valid score between 0–100.</div>
+              </div>
+
+              <!-- Submit, Clear & About Buttons -->
+              <div class="col-12 d-flex flex-column flex-md-row gap-2 mt-3">
+                <button type="submit" class="btn btn-primary btn-lg w-100 w-md-auto btn-custom">
+                  <i class="bi bi-calculator"></i> Predict General Weighted Average (GWA)
+                </button>
+
+                <!-- JS-driven: clears all inputs to blank -->
+                <button type="button" id="clearBtn" class="btn btn-warning btn-lg w-100 w-md-auto btn-custom" >
+                  <i class="bi bi-x-circle"></i> Clear All
+                </button>
+
+                <!-- About Button -->
+                <button type="button" data-bs-toggle="modal" data-bs-target="#aboutModal" class="btn btn-success btn-lg w-100 w-md-auto btn-custom">
+                  <i class="bi bi-info-circle"></i> About This App
+                </button>
+
+                <!-- Disclaimer Button -->
+                <button type="button" data-bs-toggle="modal" data-bs-target="#disclaimerModal" class="btn btn-info btn-lg w-100 w-md-auto btn-custom">
+                  <i class="bi bi-info-circle"></i> Disclaimer
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spinner Overlay -->
+  <div id="loadingOverlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+<!-- Prediction Result Modal -->
+<div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 480px;">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+
+      <!-- Header -->
+      <div class="modal-header text-white rounded-top-4" style="background: linear-gradient(135deg, #007bff, #6610f2);">
+        <h5 class="modal-title fw-bold" id="resultModalLabel">
+          Prediction Summary & Equivalent Result
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4">
+        {% if prediction %}
+          {% if prediction < 1.0 %}{% set prediction = 1.0 %}
+          {% elif prediction > 5.0 %}{% set prediction = 5.0 %}{% endif %}
+
+          {% set equivalent = '' %}
+          {% set badge_class = 'bg-secondary' %}
+          {% set highlight_color = '#f8f9fa' %}
+
+          {# Color code: 1.0 (Green) → 5.0 (Red) #}
+          {% if prediction >= 1.0 and prediction <= 1.25 %}
+            {% set equivalent = 'Excellent' %}
+            {% set badge_class = 'bg-success' %}
+            {% set highlight_color = '#4caf50' %}
+          {% elif prediction >= 1.26 and prediction <= 1.75 %}
+            {% set equivalent = 'Very Satisfactory' %}
+            {% set badge_class = 'bg-success' %}
+            {% set highlight_color = '#6dc36d' %}
+          {% elif prediction >= 1.76 and prediction <= 2.25 %}
+            {% set equivalent = 'Satisfactory' %}
+            {% set badge_class = 'bg-primary' %}
+            {% set highlight_color = '#a4d96c' %}
+          {% elif prediction >= 2.26 and prediction <= 3.0 %}
+            {% set equivalent = 'Fairly Satisfactory' %}
+            {% set badge_class = 'bg-warning text-dark' %}
+            {% set highlight_color = '#ffcc66' %}
+          {% elif prediction >= 3.1 and prediction <= 4.0 %}
+            {% set equivalent = 'Conditional Failure' %}
+            {% set badge_class = 'bg-danger' %}
+            {% set highlight_color = '#ff7b54' %}
+          {% elif prediction >= 4.01 %}
+            {% set equivalent = 'Failing' %}
+            {% set badge_class = 'bg-dark' %}
+            {% set highlight_color = '#ff4c4c' %}
+          {% endif %}
+
+          <!-- Student Input Summary -->
+          <div class="mb-4">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="bi bi-person-lines-fill me-2"></i>Student Input Summary
+            </h6>
+            <div class="table-responsive" style="max-width: 100%;">
+              <table class="table table-bordered table-striped align-middle rounded-3 overflow-hidden shadow-sm">
+                <thead class="table-primary text-center">
+                  <tr>
+                    <th>Category</th>
+                    <th>Input</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td><strong>Gender</strong></td><td>{{ request.form.get('gender', '-') }}</td></tr>
+                  <tr><td><strong>School Type</strong></td><td>{{ request.form.get('school_attended', '-') }}</td></tr>
+                  <tr><td><strong>Strand</strong></td><td>{{ request.form.get('track', '-') }}</td></tr>
+                  <tr><td><strong>Preferred Course</strong></td><td>{{ request.form.get('course', '-') }}</td></tr>
+                  <tr><td><strong>English Grade</strong></td><td>{{ form_data.get('SHS_ENGLISH','-') }}</td></tr>
+                  <tr><td><strong>Math Grade</strong></td><td>{{ form_data.get('SHS_MATH','-') }}</td></tr>
+                  <tr><td><strong>Science Grade</strong></td><td>{{ form_data.get('SHS_SCIENCE','-') }}</td></tr>
+                  <tr><td><strong>General Average</strong></td><td>{{ form_data.get('SHS_GRADE','-') }}</td></tr>
+                  <tr><td><strong>Entrance Exam Score</strong></td><td>{{ form_data.get('EXAM','-') }}</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Equivalent Result Highlight -->
+          <div class="text-center mb-4 p-4 rounded-4 shadow-sm" style="background-color: {{ highlight_color }};">
+            <div class="text-muted small mb-1">Predicted Academic Standing</div>
+            <div class="display-6 fw-bold mb-2 text-dark">{{ equivalent }}</div>
+            <span class="badge {{ badge_class }} fs-6 rounded-pill px-3 py-2 shadow-sm">
+              {{ "%.2f"|format(prediction) }} GWA
+            </span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="progress" style="height: 18px; border-radius: 10px;">
+            <div 
+              class="progress-bar {{ badge_class }} progress-bar-striped progress-bar-animated"
+              role="progressbar"
+              style="width: {{ ((5 - prediction)/4)*100 }}%;"
+              aria-valuenow="{{ prediction }}" 
+              aria-valuemin="1" 
+              aria-valuemax="5">
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between small fw-bold mt-2 text-secondary">
+            <span>Worst (5.0)</span>
+            <span>Best (1.0)</span>
+          </div>
+
+          <!-- Academic Suggestion -->
+          {% set suggestion_pool = {
+              'Excellent': [
+                "Sustain your academic excellence through continuous learning and leadership opportunities.",
+                "Engage in independent study or research to broaden your intellectual horizon.",
+                "Consider mentoring others and sharing your best practices for academic success."
+              ],
+              'Very Satisfactory': [
+                "Maintain your effective study habits and aim for higher consistency in performance.",
+                "Participate in group discussions and advanced study sessions to further improve.",
+                "Continue refining your analytical and problem-solving skills."
+              ],
+              'Satisfactory': [
+                "Focus on improving weak areas through consistent review and active participation.",
+                "Adopt better time management strategies for balanced academic performance.",
+                "Seek additional learning resources to enhance understanding."
+              ],
+              'Fairly Satisfactory': [
+                "Establish a focused study schedule and reduce distractions.",
+                "Consult your instructors regularly to clarify difficult concepts.",
+                "Join peer-learning groups to gain fresh insights."
+              ],
+              'Conditional Failure': [
+                "Seek immediate academic support and mentorship to address key challenges.",
+                "Focus on fundamental concepts before advancing to complex topics.",
+                "Consider enrolling in tutorial programs to reinforce learning."
+              ],
+              'Failing': [
+                "Reassess your study approach and create a structured improvement plan.",
+                "Engage actively with tutors or academic assistance programs.",
+                "Limit non-academic distractions and commit to consistent effort."
+              ]
+            } %}
+          {% set pool = suggestion_pool.get(equivalent, []) | unique | list %}
+          {% set suggestion = pool | random %}
+
+          {% if suggestion %}
+            <div class="mt-4 suggestion-fade">
+              <h6 class="fw-bold text-primary mb-2"><i class="bi bi-lightbulb me-2"></i>Academic Suggestion</h6>
+              <div class="alert alert-info border-0 rounded-3 shadow-sm">
+                {{ suggestion }}
+              </div>
+            </div>
+          {% endif %}
+
+        {% else %}
+          <p class="text-muted mb-0">No prediction yet. Please fill out the form and submit to view your result.</p>
+        {% endif %}
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-0">
+        <button type="button" data-bs-toggle="modal" data-bs-target="#disclaimerModal" class="btn btn-outline-info">
+          View Disclaimer
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- 🌈 Color Animation Styles -->
+<style>
+  .highlight-success {
+    background: linear-gradient(180deg, #d4edda, #ffffff);
+    border-radius: 12px;
+    animation: glow-success 2s infinite alternate;
+  }
+
+  .highlight-very-good {
+    background: linear-gradient(180deg, #c8f7c5, #ffffff);
+    border-radius: 12px;
+    animation: glow-verygood 2s infinite alternate;
+  }
+
+  .highlight-primary {
+    background: linear-gradient(180deg, #d6e4ff, #ffffff);
+    border-radius: 12px;
+    animation: glow-primary 2s infinite alternate;
+  }
+
+  .highlight-warning {
+    background: linear-gradient(180deg, #fff3cd, #ffffff);
+    border-radius: 12px;
+    animation: glow-warning 2s infinite alternate;
+  }
+
+  .highlight-danger {
+    background: linear-gradient(180deg, #f8d7da, #ffffff);
+    border-radius: 12px;
+    animation: glow-danger 2s infinite alternate;
+  }
+
+  .highlight-dark {
+    background: linear-gradient(180deg, #d6d8d9, #ffffff);
+    border-radius: 12px;
+    animation: glow-dark 2s infinite alternate;
+  }
+
+  /* Glow Animations */
+  @keyframes glow-success {
+    from { box-shadow: 0 0 5px #28a745; }
+    to { box-shadow: 0 0 20px #28a745; }
+  }
+
+  @keyframes glow-verygood {
+    from { box-shadow: 0 0 5px #20c997; }
+    to { box-shadow: 0 0 20px #20c997; }
+  }
+
+  @keyframes glow-primary {
+    from { box-shadow: 0 0 5px #007bff; }
+    to { box-shadow: 0 0 20px #007bff; }
+  }
+
+  @keyframes glow-warning {
+    from { box-shadow: 0 0 5px #ffc107; }
+    to { box-shadow: 0 0 20px #ffc107; }
+  }
+
+  @keyframes glow-danger {
+    from { box-shadow: 0 0 5px #dc3545; }
+    to { box-shadow: 0 0 20px #dc3545; }
+  }
+
+  @keyframes glow-dark {
+    from { box-shadow: 0 0 5px #343a40; }
+    to { box-shadow: 0 0 20px #343a40; }
+  }
+</style>
+
+
+
+
+  <!-- Bootstrap bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+ <script>
+(function () {
+  'use strict';
+  const form = document.getElementById('gwaForm');
+  const overlay = document.getElementById('loadingOverlay');
+
+  // --- Bootstrap Validation Handling ---
+  form.addEventListener('submit', function (event) {
+    if (!form.checkValidity()) {
+      event.preventDefault();
+      event.stopPropagation();
+    } else {
+      // Show spinner overlay only if valid
+      overlay.style.display = 'flex';
+    }
+    form.classList.add('was-validated');
+  }, false);
+
+  // CLEAR FORM HANDLER
+  const clearBtn = document.getElementById('clearBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function () {
+      form.reset();
+      form.querySelectorAll('input, select').forEach(el => {
+        if (el.tagName === 'SELECT') {
+          el.selectedIndex = 0;
+        } else if (el.type === 'number' || el.type === 'text') {
+          el.value = '';
+        }
+      });
+      form.classList.remove('was-validated');
+    });
+  }
+
+  // --- Modal Animations ---
+  const modalEl = document.getElementById('resultModal');
+  if (modalEl) {
+    modalEl.addEventListener('shown.bs.modal', function () {
+      const gwaEl = modalEl.querySelector('#gwaValue');
+      if (gwaEl) {
+        const finalVal = parseFloat((gwaEl.textContent || '0').trim()) || 0;
+        gwaEl.textContent = '0.00';
+        requestAnimationFrame(() => gwaEl.classList.add('show'));
+        const duration = 1000, start = performance.now();
+        function tick(now) {
+          const t = Math.min((now - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - t, 3);
+          gwaEl.textContent = (finalVal * ease).toFixed(2);
+          if (t < 1) requestAnimationFrame(tick);
+          else gwaEl.textContent = finalVal.toFixed(2);
+        }
+        requestAnimationFrame(tick);
+      }
+
+      const bars = modalEl.querySelectorAll('.progress-bar');
+      bars.forEach(bar => {
+        const target = bar.style.width || (bar.getAttribute('aria-valuenow') ? bar.getAttribute('aria-valuenow') + '%' : '0%');
+        bar.style.width = '0%';
+        void bar.offsetWidth;
+        setTimeout(() => { bar.style.width = target; }, 100);
+      });
+
+      const sug = modalEl.querySelector('.suggestion-fade');
+      if (sug) requestAnimationFrame(() => sug.classList.add('show'));
+    });
+  }
+
+  // Auto-open modal when a prediction exists
+  const hasPrediction = {{ 'true' if (prediction is defined and prediction is not none) else 'false' }};
+  if (hasPrediction && modalEl) {
+    const resultModal = new bootstrap.Modal(modalEl, {keyboard: true});
+    resultModal.show();
+  }
+})();
+</script>
+
+</body>
+</html>
