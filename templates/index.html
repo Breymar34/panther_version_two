@@ -287,7 +287,6 @@
   </div>
 
 <!-- Prediction Result Modal -->
-<!-- Prediction Result Modal -->
 <div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 480px;">
     <div class="modal-content shadow-lg border-0 rounded-4">
@@ -309,44 +308,54 @@
           {% set equivalent = '' %}
           {% set badge_class = 'bg-secondary' %}
           {% set highlight_class = '' %}
+          {% set gwa_range = '' %}
 
           {# === GWA RANGE LOGIC === #}
           {% if prediction >= 1.00 and prediction <= 1.25 %}
             {% set equivalent = 'Excellent' %}
             {% set badge_class = 'bg-success' %}
             {% set highlight_class = 'highlight-excellent' %}
+            {% set gwa_range = '1.00 - 1.25' %}
           {% elif prediction >= 1.26 and prediction <= 1.50 %}
             {% set equivalent = 'Very Satisfactory' %}
             {% set badge_class = 'bg-success' %}
             {% set highlight_class = 'highlight-very-satisfactory' %}
+            {% set gwa_range = '1.26 - 1.50' %}
           {% elif prediction >= 1.51 and prediction <= 2.00 %}
             {% set equivalent = 'Satisfactory' %}
             {% set badge_class = 'bg-primary' %}
             {% set highlight_class = 'highlight-satisfactory' %}
+            {% set gwa_range = '1.51 - 2.00' %}
           {% elif prediction >= 2.01 and prediction <= 2.25 %}
             {% set equivalent = 'Fairly Satisfactory' %}
             {% set badge_class = 'bg-info text-dark' %}
             {% set highlight_class = 'highlight-fairly-satisfactory' %}
+            {% set gwa_range = '2.01 - 2.25' %}
           {% elif prediction >= 2.26 and prediction <= 2.50 %}
             {% set equivalent = 'Fairly Satisfactory' %}
             {% set badge_class = 'bg-warning text-dark' %}
             {% set highlight_class = 'highlight-warning' %}
+            {% set gwa_range = '2.26 - 2.50' %}
           {% elif prediction >= 2.51 and prediction <= 2.75 %}
             {% set equivalent = 'Conditional Failure' %}
             {% set badge_class = 'bg-orange text-dark' %}
             {% set highlight_class = 'highlight-orange' %}
+            {% set gwa_range = '2.51 - 2.75' %}
           {% elif prediction >= 2.76 and prediction <= 3.00 %}
             {% set equivalent = 'Conditional Failure' %}
             {% set badge_class = 'bg-danger' %}
             {% set highlight_class = 'highlight-danger' %}
+            {% set gwa_range = '2.76 - 3.00' %}
           {% elif prediction >= 3.01 and prediction <= 4.00 %}
             {% set equivalent = 'Conditional Failure' %}
             {% set badge_class = 'bg-danger' %}
             {% set highlight_class = 'highlight-danger' %}
+            {% set gwa_range = '3.01 - 4.00' %}
           {% elif prediction >= 4.01 and prediction <= 5.00 %}
             {% set equivalent = 'Failing' %}
             {% set badge_class = 'bg-dark' %}
             {% set highlight_class = 'highlight-dark' %}
+            {% set gwa_range = '4.01 - 5.00' %}
           {% endif %}
 
           <!-- Student Input Summary -->
@@ -354,7 +363,7 @@
             <h6 class="fw-bold text-primary mb-3">
               <i class="bi bi-person-lines-fill me-2"></i>Student Input Summary
             </h6>
-            <div class="table-responsive" style="max-width: 100%;">
+            <div class="table-responsive">
               <table class="table table-bordered table-striped align-middle rounded-3 overflow-hidden shadow-sm">
                 <thead class="table-primary text-center">
                   <tr>
@@ -382,16 +391,16 @@
             <div class="text-muted small mb-1">Predicted Academic Standing</div>
             <div class="display-6 fw-bold mb-2 text-dark">{{ equivalent }}</div>
             <span class="badge {{ badge_class }} fs-6 rounded-pill px-3 py-2 shadow-sm">
-              {{ "%.2f"|format(prediction) }} GWA
+              {{ gwa_range }}
             </span>
           </div>
 
-          <!-- Progress Bar -->
-          <div class="progress" style="height: 18px; border-radius: 10px;">
+          <!-- Gradient Progress Bar -->
+          <div class="progress" style="height: 18px; border-radius: 10px; background: #f1f1f1;">
             <div 
-              class="progress-bar {{ badge_class }} progress-bar-striped progress-bar-animated"
+              class="progress-bar progress-bar-striped progress-bar-animated"
               role="progressbar"
-              style="width: {{ ((5 - prediction)/4)*100 }}%"
+              style="width: {{ ((5 - prediction)/4)*100 }}%; background: linear-gradient(90deg, #00c853, #ffeb3b, #ff6f00, #d50000);"
               aria-valuenow="{{ prediction }}" 
               aria-valuemin="1" 
               aria-valuemax="5">
@@ -464,6 +473,19 @@
     </div>
   </div>
 </div>
+
+<!-- CSS for background color coding -->
+<style>
+  .highlight-excellent { background: linear-gradient(135deg, #9cffac, #63e36b); }
+  .highlight-very-satisfactory { background: linear-gradient(135deg, #b7ffb0, #7df58f); }
+  .highlight-satisfactory { background: linear-gradient(135deg, #d2ffb3, #a2f57a); }
+  .highlight-fairly-satisfactory { background: linear-gradient(135deg, #fff3b0, #ffd966); }
+  .highlight-warning { background: linear-gradient(135deg, #ffdb99, #ffc14d); }
+  .highlight-orange { background: linear-gradient(135deg, #ffb877, #ff954d); }
+  .highlight-danger { background: linear-gradient(135deg, #ff8a80, #ff4c4c); }
+  .highlight-dark { background: linear-gradient(135deg, #a8a8a8, #343a40); }
+</style>
+
 
 <!-- CSS for background color coding -->
 <style>
