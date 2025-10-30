@@ -156,6 +156,7 @@
                   <option value="">--Select Gender--</option>
                   <option value="Male" {% if request.form.get('gender') == 'Male' %}selected{% endif %}>Male</option>
                   <option value="Female" {% if request.form.get('gender') == 'Female' %}selected{% endif %}>Female</option>
+                  <option value="Prefer not to say" {% if request.form.get('gender') == 'Prefer not to say' %}selected{% endif %}>Prefer not to say</option>
                 </select>
                 <div class="invalid-feedback">Please select a gender.</div>
               </div>
