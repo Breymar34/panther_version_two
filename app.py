@@ -4,7 +4,7 @@ import joblib
 app = Flask(__name__)
 
 # Load model and metrics
-model_bundle = joblib.load("gwa_model_edited.pkl")
+model_bundle = joblib.load("gwa_model_rf_cv.pkl")
 model = model_bundle["model"]
 metrics = model_bundle["metrics"]
 
@@ -90,5 +90,5 @@ def home():
 
 # Important for Vercel
 if __name__ == "__main__":
-#  app.run(debug=True, port=5001)
-   app.run()    
+#   app.run(debug=True, port=5001)
+    app.run()    
